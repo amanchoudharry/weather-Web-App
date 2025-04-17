@@ -1,28 +1,83 @@
 import React, { useEffect, useState } from "react";
 import axios from "./axiosInstance";
-import Dashboard from "./components/Dashboard";
 import CurrentWeather from "./components/CurrentWeather";
+import HourlyForecast from "./components/HourlyForecast";
+import DailyForecast from "./components/DailyForecast";
+import SearchBar from "./components/SearchBar";
 
 function App() {
     const [weatherData, setWeatherData] = useState(null);
+    const [hourlyData, setHourlyData] = useState([]);
+    const [dailyData, setDailyData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const fetchWeatherData = async (city = "Patna") => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            // Fetch current weather
+            const currentResponse = await axios.get(`/weather/current?city=${city}`);
+            setWeatherData(currentResponse.data);
+
+            // Fetch hourly forecast
+            const hourlyResponse = await axios.get(`/weather/hourly?city=${city}`);
+            setHourlyData(hourlyResponse.data);
+
+            // Fetch daily forecast
+            const dailyResponse = await axios.get(`/weather/daily?city=${city}`);
+            setDailyData(dailyResponse.data);
+        } catch (err) {
+            console.error("Error fetching weather data:", err);
+            // Handle different types of error responses
+            if (err.response?.data) {
+                // If the error response has a message field
+                if (typeof err.response.data === 'string') {
+                    setError(err.response.data);
+                } else if (err.response.data.error) {
+                    setError(err.response.data.error);
+                } else {
+                    setError("An error occurred while fetching weather data");
+                }
+            } else {
+                setError(err.message || "Failed to fetch weather data");
+            }
+            setWeatherData(null);
+            setHourlyData([]);
+            setDailyData([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        axios
-            .get("/weather/current?city=Patna")
-            .then((res) => setWeatherData(res.data))
-            .catch((err) => console.error(err));
+        fetchWeatherData();
     }, []);
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#0e172b] to-[#1f2f45] text-white">
-            {/* Xiaomi-Style Hero Section */}
-            <CurrentWeather weatherData={weatherData} />
+            <div className="max-w-4xl mx-auto px-4 py-8">
+                <SearchBar onSearch={fetchWeatherData} />
+                
+                {error && (
+                    <div className="bg-red-500/20 border border-red-500 text-red-200 px-4 py-3 rounded-lg mb-4">
+                        {error}
+                    </div>
+                )}
 
-            {/* Heading */}
-            <h1 className="text-2xl font-bold px-4 pb-4">Weather Forecast App</h1>
-
-            {/* Dashboard Section */}
-            <Dashboard />
+                {loading ? (
+                    <div className="flex justify-center items-center h-64">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                    </div>
+                ) : (
+                    <>
+                        <CurrentWeather weatherData={weatherData} />
+                        <HourlyForecast hourlyData={hourlyData} />
+                        <DailyForecast dailyData={dailyData} />
+                    </>
+                )}
+            </div>
         </div>
     );
 }
