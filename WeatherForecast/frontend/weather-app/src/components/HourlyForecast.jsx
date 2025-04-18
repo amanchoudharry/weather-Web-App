@@ -1,6 +1,6 @@
 import React from 'react';
 
-const HourlyForecast = ({ hourlyData }) => {
+const HourlyForecast = ({ hourlyData, unit }) => {
     if (!hourlyData || hourlyData.length === 0) return null;
 
     return (
@@ -15,7 +15,9 @@ const HourlyForecast = ({ hourlyData }) => {
                             alt={hour.condition}
                             className="w-12 h-12"
                         />
-                        <span className="text-lg font-medium">{hour.temp}°</span>
+                        <span className="text-lg font-medium">
+                            {(hour.temperature || hour.temp || '').toString().split('.')[0]}{unit}
+                        </span>
                     </div>
                 ))}
             </div>

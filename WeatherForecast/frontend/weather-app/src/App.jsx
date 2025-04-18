@@ -4,6 +4,8 @@ import CurrentWeather from "./components/CurrentWeather";
 import HourlyForecast from "./components/HourlyForecast";
 import DailyForecast from "./components/DailyForecast";
 import SearchBar from "./components/SearchBar";
+import UnitToggle from "./components/UnitToggle";
+import WeatherDetails from "./components/WeatherDetails";
 
 function App() {
     const [weatherData, setWeatherData] = useState(null);
@@ -11,6 +13,42 @@ function App() {
     const [dailyData, setDailyData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isCelsius, setIsCelsius] = useState(true);
+
+    const celsiusToFahrenheit = (celsius) => {
+        return (celsius * 9/5) + 32;
+    };
+
+    const convertTemperature = (data) => {
+        if (!data) return null;
+
+        if (Array.isArray(data)) {
+            return data.map(item => ({
+                ...item,
+                temp: item.temperature || item.temp,
+                temperature: item.temperature,
+                min: item.min,
+                max: item.max,
+                ...((!isCelsius && {
+                    temp: celsiusToFahrenheit(item.temperature || item.temp).toFixed(2),
+                    temperature: item.temperature ? celsiusToFahrenheit(item.temperature).toFixed(2) : undefined,
+                    min: item.min ? celsiusToFahrenheit(item.min).toFixed(2) : undefined,
+                    max: item.max ? celsiusToFahrenheit(item.max).toFixed(2) : undefined
+                }))
+            }));
+        }
+
+        if (isCelsius) {
+            return data;
+        }
+
+        return {
+            ...data,
+            temperature: celsiusToFahrenheit(data.temperature).toFixed(2),
+            min: data.min ? celsiusToFahrenheit(data.min).toFixed(2) : undefined,
+            max: data.max ? celsiusToFahrenheit(data.max).toFixed(2) : undefined
+        };
+    };
 
     const fetchWeatherData = async (city = "Patna") => {
         try {
@@ -59,6 +97,7 @@ function App() {
         <div className="min-h-screen bg-gradient-to-b from-[#0e172b] to-[#1f2f45] text-white">
             <div className="max-w-4xl mx-auto px-4 py-8">
                 <SearchBar onSearch={fetchWeatherData} />
+                <UnitToggle isCelsius={isCelsius} onToggle={setIsCelsius} />
                 
                 {error && (
                     <div className="bg-red-500/20 border border-red-500 text-red-200 px-4 py-3 rounded-lg mb-4">
@@ -72,9 +111,22 @@ function App() {
                     </div>
                 ) : (
                     <>
-                        <CurrentWeather weatherData={weatherData} />
-                        <HourlyForecast hourlyData={hourlyData} />
-                        <DailyForecast dailyData={dailyData} />
+                        <CurrentWeather 
+                            weatherData={convertTemperature(weatherData)} 
+                            unit={isCelsius ? "°C" : "°F"} 
+                        />
+                        <HourlyForecast 
+                            hourlyData={convertTemperature(hourlyData)} 
+                            unit={isCelsius ? "°C" : "°F"} 
+                        />
+                        <DailyForecast 
+                            dailyData={convertTemperature(dailyData)} 
+                            unit={isCelsius ? "°C" : "°F"} 
+                        />
+                        <WeatherDetails 
+                            weatherData={convertTemperature(weatherData)} 
+                            unit={isCelsius ? "°C" : "°F"} 
+                        />
                     </>
                 )}
             </div>

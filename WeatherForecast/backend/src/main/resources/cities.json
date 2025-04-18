@@ -1,0 +1,29 @@
+{
+  "cities": [
+    {"name": "New York", "country": "US"},
+    {"name": "London", "country": "GB"},
+    {"name": "Paris", "country": "FR"},
+    {"name": "Tokyo", "country": "JP"},
+    {"name": "Delhi", "country": "IN"},
+    {"name": "Mumbai", "country": "IN"},
+    {"name": "Bangalore", "country": "IN"},
+    {"name": "Kolkata", "country": "IN"},
+    {"name": "Chennai", "country": "IN"},
+    {"name": "Hyderabad", "country": "IN"},
+    {"name": "Pune", "country": "IN"},
+    {"name": "Ahmedabad", "country": "IN"},
+    {"name": "Patna", "country": "IN"},
+    {"name": "California", "country": "US"},
+    {"name": "Chicago", "country": "US"},
+    {"name": "Houston", "country": "US"},
+    {"name": "Sydney", "country": "AU"},
+    {"name": "Melbourne", "country": "AU"},
+    {"name": "Berlin", "country": "DE"},
+    {"name": "Madrid", "country": "ES"},
+    {"name": "Rome", "country": "IT"},
+    {"name": "Beijing", "country": "CN"},
+    {"name": "Shanghai", "country": "CN"},
+    {"name": "Singapore", "country": "SG"},
+    {"name": "Dubai", "country": "AE"}
+  ]
+} 

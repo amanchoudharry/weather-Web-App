@@ -45,18 +45,26 @@ public class WeatherService {
                 logger.error("Null response received from OpenWeatherMap API");
                 throw new RuntimeException("Failed to fetch weather data");
             }
+
+            // Check if the response contains an error message
+            if (response.containsKey("message")) {
+                String errorMessage = (String) response.get("message");
+                logger.error("OpenWeatherMap API error: {}", errorMessage);
+                throw new RuntimeException(errorMessage);
+            }
+
             return mapToWeatherResponse(response, city);
         } catch (HttpClientErrorException e) {
-            logger.error("Error fetching weather data: {}", e.getMessage());
+            logger.error("HTTP error fetching weather data: {}", e.getMessage());
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
                 throw new RuntimeException("City not found: " + city);
             } else if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                throw new RuntimeException("Invalid API key. Please check your configuration.");
+                throw new RuntimeException("Invalid API key");
             }
-            throw new RuntimeException("Failed to fetch weather data: " + e.getMessage());
+            throw new RuntimeException("Error fetching weather data: " + e.getMessage());
         } catch (Exception e) {
             logger.error("Unexpected error: {}", e.getMessage());
-            throw new RuntimeException("An unexpected error occurred: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch weather data: " + e.getMessage());
         }
     }
 
@@ -165,21 +173,55 @@ public class WeatherService {
         WeatherResponse response = new WeatherResponse();
         response.setCity(city);
         
-        Map<String, Object> main = (Map<String, Object>) data.get("main");
-        List<Map<String, Object>> weather = (List<Map<String, Object>>) data.get("weather");
-        
-        if (main != null) {
-            response.setTemperature(((Number) main.get("temp")).doubleValue());
-            response.setMin(((Number) main.get("temp_min")).doubleValue());
-            response.setMax(((Number) main.get("temp_max")).doubleValue());
+        // Extract coordinates
+        Map<String, Object> coord = (Map<String, Object>) data.get("coord");
+        if (coord != null) {
+            response.setLatitude(((Number) coord.get("lat")).doubleValue());
+            response.setLongitude(((Number) coord.get("lon")).doubleValue());
         }
         
+        // Extract main weather data
+        Map<String, Object> main = (Map<String, Object>) data.get("main");
+        if (main != null) {
+            response.setTemperature(((Number) main.get("temp")).doubleValue());
+            response.setFeelsLike(((Number) main.get("feels_like")).doubleValue());
+            response.setMin(((Number) main.get("temp_min")).doubleValue());
+            response.setMax(((Number) main.get("temp_max")).doubleValue());
+            response.setPressure(((Number) main.get("pressure")).intValue());
+            response.setHumidity(((Number) main.get("humidity")).intValue());
+        }
+        
+        // Extract weather conditions
+        List<Map<String, Object>> weather = (List<Map<String, Object>>) data.get("weather");
         if (weather != null && !weather.isEmpty()) {
             Map<String, Object> weatherData = weather.get(0);
             response.setCondition((String) weatherData.get("main"));
+            response.setDescription((String) weatherData.get("description"));
             response.setIcon((String) weatherData.get("icon"));
         }
         
+        // Extract wind data
+        Map<String, Object> wind = (Map<String, Object>) data.get("wind");
+        if (wind != null) {
+            response.setWindSpeed(((Number) wind.get("speed")).doubleValue());
+            response.setWindDirection(((Number) wind.get("deg")).intValue());
+            if (wind.containsKey("gust")) {
+                response.setWindGust(((Number) wind.get("gust")).doubleValue());
+            }
+        }
+        
+        // Extract visibility
+        if (data.containsKey("visibility")) {
+            response.setVisibility(((Number) data.get("visibility")).intValue());
+        }
+        
+        // Extract clouds
+        Map<String, Object> clouds = (Map<String, Object>) data.get("clouds");
+        if (clouds != null) {
+            response.setCloudiness(((Number) clouds.get("all")).intValue());
+        }
+        
+        // Extract timestamp
         if (data.containsKey("dt")) {
             long dt = ((Number) data.get("dt")).longValue();
             LocalDateTime dateTime = LocalDateTime.ofInstant(
@@ -187,10 +229,27 @@ public class WeatherService {
                 ZoneId.systemDefault()
             );
             response.setTime(dateTime.format(timeFormatter));
+            response.setDate(dateTime.format(dateFormatter));
         }
         
-        // Mock AQI data (you can integrate with a real AQI API if needed)
-        response.setAqi((int) (Math.random() * 5) + 1);
+        // Extract sunrise and sunset
+        Map<String, Object> sys = (Map<String, Object>) data.get("sys");
+        if (sys != null) {
+            if (sys.containsKey("sunrise")) {
+                long sunrise = ((Number) sys.get("sunrise")).longValue();
+                response.setSunrise(LocalDateTime.ofInstant(
+                    Instant.ofEpochSecond(sunrise),
+                    ZoneId.systemDefault()
+                ).format(timeFormatter));
+            }
+            if (sys.containsKey("sunset")) {
+                long sunset = ((Number) sys.get("sunset")).longValue();
+                response.setSunset(LocalDateTime.ofInstant(
+                    Instant.ofEpochSecond(sunset),
+                    ZoneId.systemDefault()
+                ).format(timeFormatter));
+            }
+        }
         
         return response;
     }

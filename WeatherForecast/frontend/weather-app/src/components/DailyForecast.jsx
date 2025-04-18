@@ -1,6 +1,6 @@
 import React from 'react';
 
-const DailyForecast = ({ dailyData }) => {
+const DailyForecast = ({ dailyData, unit }) => {
     if (!dailyData || dailyData.length === 0) return null;
 
     return (
@@ -19,14 +19,14 @@ const DailyForecast = ({ dailyData }) => {
                             <span className="text-sm">{day.condition}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="text-gray-300">{day.min}°</span>
+                            <span className="text-gray-300">{day.min}{unit}</span>
                             <div className="w-16 h-1 bg-gray-600 rounded-full">
                                 <div 
                                     className="h-full bg-gradient-to-r from-blue-400 to-red-400 rounded-full"
                                     style={{ width: `${(day.temp - day.min) / (day.max - day.min) * 100}%` }}
                                 />
                             </div>
-                            <span>{day.max}°</span>
+                            <span>{day.max}{unit}</span>
                         </div>
                     </div>
                 ))}
