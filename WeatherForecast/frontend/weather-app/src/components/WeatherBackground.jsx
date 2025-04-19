@@ -1,12 +1,12 @@
 "use client"
 
+import React from 'react'
 import { useEffect, useState } from "react"
 import SunnyAnimation from "./animations/SunnyAnimation"
 import CloudyAnimation from "./animations/CloudyAnimation"
 import RainyAnimation from "./animations/RainyAnimation"
 import SnowyAnimation from "./animations/SnowyAnimation"
-import ThunderstormAnimation from "./animations/ThunderstormAnimation"
-import FoggyAnimation from "./animations/FoggyAnimation"
+import ThunderAnimation from "./animations/ThunderStormAnimation"
 import { Player } from "@lottiefiles/react-lottie-player"
 
 const WeatherBackground = ({ condition }) => {
@@ -36,7 +36,27 @@ const WeatherBackground = ({ condition }) => {
     setLottieAnimation(animationPath)
   }, [condition])
 
-  const getWeatherAnimation = () => {
+  const getBackground = (condition) => {
+    if (!condition) return "from-blue-500 to-blue-400"
+
+    const lowerCondition = condition.toLowerCase()
+
+    if (lowerCondition.includes("clear") || lowerCondition.includes("sunny")) {
+      return "from-blue-500 to-blue-400"
+    } else if (lowerCondition.includes("cloud")) {
+      return "from-gray-400 to-gray-300"
+    } else if (lowerCondition.includes("rain") || lowerCondition.includes("drizzle")) {
+      return "from-gray-600 to-gray-500"
+    } else if (lowerCondition.includes("snow")) {
+      return "from-slate-500 to-slate-600"
+    } else if (lowerCondition.includes("thunder") || lowerCondition.includes("storm")) {
+      return "from-gray-800 to-gray-700"
+    } else {
+      return "from-blue-500 to-blue-400"
+    }
+  }
+
+  const getAnimation = (condition) => {
     if (!condition) return null
 
     const lowerCondition = condition.toLowerCase()
@@ -50,45 +70,20 @@ const WeatherBackground = ({ condition }) => {
     } else if (lowerCondition.includes("snow")) {
       return <SnowyAnimation />
     } else if (lowerCondition.includes("thunder") || lowerCondition.includes("storm")) {
-      return <ThunderstormAnimation />
-    } else if (lowerCondition.includes("fog") || lowerCondition.includes("mist")) {
-      return <FoggyAnimation />
+      return <ThunderAnimation />
     }
-
     return null
-  }
-
-  const getWeatherGradient = () => {
-    if (!condition) return "from-[#0e172b] to-[#1f2f45]"
-
-    const lowerCondition = condition.toLowerCase()
-
-    if (lowerCondition.includes("clear") || lowerCondition.includes("sunny")) {
-      return "from-blue-500 to-sky-300"
-    } else if (lowerCondition.includes("cloud")) {
-      return "from-slate-600 to-slate-400"
-    } else if (lowerCondition.includes("rain") || lowerCondition.includes("drizzle")) {
-      return "from-slate-700 to-slate-500"
-    } else if (lowerCondition.includes("snow")) {
-      return "from-slate-300 to-blue-200"
-    } else if (lowerCondition.includes("thunder") || lowerCondition.includes("storm")) {
-      return "from-slate-800 to-slate-600"
-    } else if (lowerCondition.includes("fog") || lowerCondition.includes("mist")) {
-      return "from-gray-400 to-gray-300"
-    } else {
-      return "from-[#0e172b] to-[#1f2f45]"
-    }
   }
 
   return (
     <div className="absolute inset-0 overflow-hidden">
       {/* Background gradient */}
       <div
-        className={`absolute inset-0 bg-gradient-to-b ${getWeatherGradient()} transition-colors duration-1000`}
+        className={`absolute inset-0 bg-gradient-to-b ${getBackground(condition)} transition-colors duration-500`}
       ></div>
 
       {/* SVG Animation */}
-      {getWeatherAnimation()}
+      {getAnimation(condition)}
 
       {/* Lottie Animation (positioned in a corner or as an overlay) */}
       {lottieAnimation && (
