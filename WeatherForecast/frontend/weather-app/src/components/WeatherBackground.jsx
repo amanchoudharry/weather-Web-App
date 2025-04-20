@@ -17,7 +17,7 @@ const WeatherBackground = ({ condition }) => {
     const lowerCondition = condition.toLowerCase()
 
     if (lowerCondition.includes("clear") || lowerCondition.includes("sunny")) {
-      return "from-sky-400 via-sky-300 to-blue-200"
+      return "from-sky-200 via-sky-400 to-blue-600"
     } else if (lowerCondition.includes("cloud")) {
       return "from-gray-300 via-gray-200 to-gray-100"
     } else if (lowerCondition.includes("rain") || lowerCondition.includes("drizzle")) {
