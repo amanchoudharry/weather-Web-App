@@ -9,6 +9,8 @@ import UnitToggle from "./components/UnitToggle"
 import WeatherDetails from "./components/WeatherDetails"
 import HourlyTemperatureChart from "./components/HourlyTemperatureChart"
 import WeatherBackground from "./components/WeatherBackground"
+import WeatherMap from "./components/WeatherMap"
+import WeatherMapControls from "./components/WeatherMapControls"
 
 // Skeleton components
 import CurrentWeatherSkeleton from "./components/skeletons/CurrentWeatherSkeleton"
@@ -23,6 +25,7 @@ const App = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [isCelsius, setIsCelsius] = useState(true)
+  const [selectedMapLayer, setSelectedMapLayer] = useState('wind')
 
   const celsiusToFahrenheit = (celsius) => {
     return (celsius * 9) / 5 + 32
@@ -141,6 +144,16 @@ const App = () => {
                   unit={isCelsius ? "°C" : "°F"} 
                 />
               </div>
+              
+              {/* Weather Map Section */}
+              <div className="relative">
+                <WeatherMap selectedLayer={selectedMapLayer} />
+                <WeatherMapControls 
+                  selectedLayer={selectedMapLayer}
+                  onLayerChange={setSelectedMapLayer}
+                />
+              </div>
+
               <HourlyTemperatureChart 
                 hourlyData={convertTemperature(hourlyForecast)} 
                 unit={isCelsius ? "°C" : "°F"}
