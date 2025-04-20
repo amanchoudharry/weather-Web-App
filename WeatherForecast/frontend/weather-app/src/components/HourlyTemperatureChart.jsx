@@ -1,35 +1,59 @@
 "use client"
 
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 
-const HourlyTemperatureChart = ({ hourlyData, unit }) => {
-  if (!hourlyData || hourlyData.length === 0) return null
+const HourlyTemperatureChart = ({ hourlyData, unit, locationTime }) => {
+  if (!hourlyData || hourlyData.length === 0 || !locationTime) return null;
+
+  // Parse location time (format: "2025-04-20 07:59")
+  const [datePart, timePart] = locationTime.split(' ');
+  const [hours, minutes] = timePart.split(':').map(num => parseInt(num));
+  
+  // Create a sorted array of the next 24 hours from the location's current time
+  const sortedData = [...hourlyData]
+    .sort((a, b) => {
+      const timeA = parseInt(a.time.split(':')[0]);
+      const timeB = parseInt(b.time.split(':')[0]);
+      return timeA - timeB;
+    });
+
+  // Find the index where we should start based on the current hour
+  const startIndex = sortedData.findIndex(item => {
+    const itemHour = parseInt(item.time.split(':')[0]);
+    return itemHour >= hours;
+  });
+
+  // Reorder the array to start from the current hour
+  const reorderedData = [
+    ...sortedData.slice(startIndex),
+    ...sortedData.slice(0, startIndex)
+  ].slice(0, 24);
 
   // Format data for the chart
-  const chartData = hourlyData.map((hour) => ({
+  const chartData = reorderedData.map((hour) => ({
     time: hour.time,
     temperature: Number.parseFloat(hour.temperature || hour.temp || 0),
     icon: hour.icon,
     condition: hour.condition,
-  }))
+  }));
 
   // Custom tooltip component
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload
+      const data = payload[0].payload;
       return (
         <div className="bg-white/10 backdrop-blur-md p-3 rounded-lg border border-white/20 shadow-lg">
           <p className="text-sm font-medium">{data.time}</p>
           <div className="flex items-center gap-2 mt-1">
             {data.icon && (
               <img
-                src={`https://openweathermap.org/img/wn/${data.icon}@2x.png`}
+                src={`https:${data.icon}`}
                 alt={data.condition}
                 className="w-10 h-10"
               />
             )}
             <p className="text-lg font-semibold">
-              {data.temperature}
+              {Math.round(data.temperature)}
               {unit}
             </p>
           </div>
@@ -40,9 +64,35 @@ const HourlyTemperatureChart = ({ hourlyData, unit }) => {
     return null
   }
 
+  // Custom tick component
+  const CustomTick = ({ x, y, payload }) => {
+    const data = chartData.find(item => item.time === payload.value);
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text x={0} y={0} dy={16} textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize={12}>
+          {payload.value}
+        </text>
+        {data?.icon && (
+          <image
+            x={-12}
+            y={20}
+            width={24}
+            height={24}
+            href={`https:${data.icon}`}
+          />
+        )}
+      </g>
+    )
+  }
+
   return (
     <div className="bg-white/10 rounded-xl p-4 mb-4">
-      <h3 className="text-lg font-semibold mb-4">Temperature Trend</h3>
+      <h3 className="text-lg font-semibold mb-4">
+        24 Hour Forecast
+        <span className="text-sm font-normal text-gray-400 ml-2">
+          ({locationTime} Local Time)
+        </span>
+      </h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
@@ -50,28 +100,20 @@ const HourlyTemperatureChart = ({ hourlyData, unit }) => {
             margin={{
               top: 5,
               right: 20,
-              left: 0,
-              bottom: 5,
+              left: 20,
+              bottom: 40,
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
             <XAxis
               dataKey="time"
-              tick={{ fill: "rgba(255,255,255,0.7)", fontSize: 12 }}
+              tick={<CustomTick />}
               axisLine={{ stroke: "rgba(255,255,255,0.2)" }}
               tickLine={{ stroke: "rgba(255,255,255,0.2)" }}
+              height={60}
             />
-            <YAxis
-              tick={{ fill: "rgba(255,255,255,0.7)", fontSize: 12 }}
-              axisLine={{ stroke: "rgba(255,255,255,0.2)" }}
-              tickLine={{ stroke: "rgba(255,255,255,0.2)" }}
+            <YAxis 
+              hide={true}
               domain={["dataMin - 2", "dataMax + 2"]}
-              label={{
-                value: unit,
-                angle: -90,
-                position: "insideLeft",
-                style: { fill: "rgba(255,255,255,0.7)" },
-              }}
             />
             <Tooltip content={<CustomTooltip />} />
             <Line

@@ -1,26 +1,60 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from '../axiosInstance';
 
-const SearchBar = ({ onSearch }) => {
+const SearchBar = ({ onLocationSelect }) => {
     const [query, setQuery] = useState('');
     const [suggestions, setSuggestions] = useState([]);
-    const [showSuggestions, setShowSuggestions] = useState(false);
     const [loading, setLoading] = useState(false);
-    const searchTimeout = useRef(null);
-    const wrapperRef = useRef(null);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const searchRef = useRef(null);
+    const debounceTimeout = useRef(null);
 
     useEffect(() => {
-        // Add click outside listener
-        function handleClickOutside(event) {
-            if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        // Detect location on component mount
+        detectLocation();
+
+        // Click outside handler
+        const handleClickOutside = (event) => {
+            if (searchRef.current && !searchRef.current.contains(event.target)) {
                 setShowSuggestions(false);
             }
-        }
+        };
+
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const fetchSuggestions = async (searchQuery) => {
+    const detectLocation = async () => {
+        try {
+            setLoading(true);
+            
+            // Get user's location using browser's geolocation API
+            const position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject);
+            });
+
+            const { latitude, longitude } = position.coords;
+            
+            // Fetch location data using coordinates
+            const response = await fetch(`http://localhost:8080/api/weather/detect-location?lat=${latitude}&lon=${longitude}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch location data');
+            }
+            
+            const data = await response.json();
+            if (data) {
+                onLocationSelect(data.city || data.name);
+                setQuery(data.city || data.name);
+            }
+        } catch (error) {
+            console.error('Error detecting location:', error);
+            // Show error message to user
+            alert('Unable to detect your location. Please enable location services or search for a city manually.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const searchLocations = async (searchQuery) => {
         if (!searchQuery.trim()) {
             setSuggestions([]);
             return;
@@ -28,10 +62,12 @@ const SearchBar = ({ onSearch }) => {
 
         try {
             setLoading(true);
-            const response = await axios.get(`/cities?query=${searchQuery}`);
-            setSuggestions(response.data);
+            const response = await fetch(`http://localhost:8080/api/weather/search?query=${encodeURIComponent(searchQuery)}`);
+            const data = await response.json();
+            setSuggestions(data);
+            setShowSuggestions(true);
         } catch (error) {
-            console.error('Error fetching suggestions:', error);
+            console.error('Error searching locations:', error);
             setSuggestions([]);
         } finally {
             setLoading(false);
@@ -41,81 +77,87 @@ const SearchBar = ({ onSearch }) => {
     const handleInputChange = (e) => {
         const value = e.target.value;
         setQuery(value);
-        setShowSuggestions(true);
 
-        // Clear existing timeout
-        if (searchTimeout.current) {
-            clearTimeout(searchTimeout.current);
+        // Debounce search
+        if (debounceTimeout.current) {
+            clearTimeout(debounceTimeout.current);
         }
-
-        // Set new timeout for debouncing
-        searchTimeout.current = setTimeout(() => {
-            fetchSuggestions(value);
+        debounceTimeout.current = setTimeout(() => {
+            searchLocations(value);
         }, 300);
     };
 
-    const handleSuggestionClick = (cityName) => {
-        setQuery(cityName);
+    const handleSuggestionClick = (suggestion) => {
+        const locationName = suggestion.name;
+        setQuery(locationName);
+        setSuggestions([]);
         setShowSuggestions(false);
-        onSearch(cityName);
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (query.trim()) {
-            onSearch(query);
-            setShowSuggestions(false);
-        }
+        onLocationSelect(locationName);
     };
 
     return (
-        <div className="relative mb-6" ref={wrapperRef}>
-            <form onSubmit={handleSubmit} className="relative">
+        <div className="relative w-full max-w-md mx-auto mb-8" ref={searchRef}>
+            <div className="relative">
                 <input
                     type="text"
                     value={query}
                     onChange={handleInputChange}
                     placeholder="Search for a city..."
-                    className="w-full px-4 py-2 bg-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-full 
+                        backdrop-blur-sm text-white placeholder-white/50 pr-12
+                        focus:outline-none focus:border-white/40 transition-all"
                 />
                 <button
-                    type="submit"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-white"
+                    onClick={detectLocation}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white/70 
+                        hover:text-white transition-colors"
+                    title="Detect my location"
                 >
-                    <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                 </button>
-            </form>
+            </div>
+
+            {/* Loading indicator */}
+            {loading && (
+                <div className="absolute right-14 top-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white/80 
+                        rounded-full animate-spin"></div>
+                </div>
+            )}
 
             {/* Suggestions dropdown */}
-            {showSuggestions && (query.trim() !== '') && (
-                <div className="absolute w-full mt-1 bg-[#1f2f45] border border-gray-700 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
-                    {loading ? (
-                        <div className="px-4 py-2 text-gray-400">Loading...</div>
-                    ) : suggestions.length > 0 ? (
-                        suggestions.map((city, index) => (
-                            <div
-                                key={index}
-                                className="px-4 py-2 cursor-pointer hover:bg-white/10 text-white"
-                                onClick={() => handleSuggestionClick(city.name)}
+            {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute mt-2 w-full bg-black/40 backdrop-blur-md rounded-xl 
+                    border border-white/10 shadow-lg overflow-hidden z-50">
+                    <ul className="max-h-60 overflow-auto">
+                        {suggestions.map((suggestion, index) => (
+                            <li
+                                key={`${suggestion.id || suggestion.name}-${index}`}
+                                onClick={() => handleSuggestionClick(suggestion)}
+                                className="px-4 py-2 hover:bg-white/10 cursor-pointer text-white 
+                                    transition-colors flex items-center gap-2"
                             >
-                                {city.name}, {city.country}
-                            </div>
-                        ))
-                    ) : (
-                        <div className="px-4 py-2 text-gray-400">No cities found</div>
-                    )}
+                                <svg className="w-4 h-4 text-white/70" fill="none" 
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" 
+                                        strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                </svg>
+                                <div>
+                                    <div className="font-medium">{suggestion.name}</div>
+                                    {suggestion.region && suggestion.country && (
+                                        <div className="text-sm text-white/70">
+                                            {suggestion.region}, {suggestion.country}
+                                        </div>
+                                    )}
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
             )}
         </div>

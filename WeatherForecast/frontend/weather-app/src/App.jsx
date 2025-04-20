@@ -1,9 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import React, { useState, useEffect } from 'react';
 import axios from "./axiosInstance"
 import CurrentWeather from "./components/CurrentWeather"
-import HourlyForecast from "./components/HourlyForecast"
 import DailyForecast from "./components/DailyForecast"
 import SearchBar from "./components/SearchBar"
 import UnitToggle from "./components/UnitToggle"
@@ -13,16 +12,15 @@ import WeatherBackground from "./components/WeatherBackground"
 
 // Skeleton components
 import CurrentWeatherSkeleton from "./components/skeletons/CurrentWeatherSkeleton"
-import HourlyForecastSkeleton from "./components/skeletons/HourlyForecastSkeleton"
 import DailyForecastSkeleton from "./components/skeletons/DailyForecastSkeleton"
 import WeatherDetailsSkeleton from "./components/skeletons/WeatherDetailsSkeleton"
 import ChartSkeleton from "./components/skeletons/ChartSkeleton"
 
 const App = () => {
   const [weatherData, setWeatherData] = useState(null)
-  const [hourlyData, setHourlyData] = useState([])
-  const [dailyData, setDailyData] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [hourlyForecast, setHourlyForecast] = useState(null)
+  const [dailyForecast, setDailyForecast] = useState(null)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [isCelsius, setIsCelsius] = useState(true)
 
@@ -61,22 +59,21 @@ const App = () => {
     }
   }
 
-  const fetchWeatherData = async (city = "Patna") => {
+  const fetchWeatherData = async (city) => {
+    setLoading(true)
+    setError(null)
     try {
-      setLoading(true)
-      setError(null)
-
       // Fetch current weather
-      const currentResponse = await axios.get(`/weather/current?city=${city}`)
+      const currentResponse = await axios.get(`/weather/current?city=${encodeURIComponent(city)}`)
       setWeatherData(currentResponse.data)
 
       // Fetch hourly forecast
-      const hourlyResponse = await axios.get(`/weather/hourly?city=${city}`)
-      setHourlyData(hourlyResponse.data)
+      const hourlyResponse = await axios.get(`/weather/hourly?city=${encodeURIComponent(city)}`)
+      setHourlyForecast(hourlyResponse.data)
 
       // Fetch daily forecast
-      const dailyResponse = await axios.get(`/weather/daily?city=${city}`)
-      setDailyData(dailyResponse.data)
+      const dailyResponse = await axios.get(`/weather/daily?city=${encodeURIComponent(city)}`)
+      setDailyForecast(dailyResponse.data)
     } catch (err) {
       console.error("Error fetching weather data:", err)
       // Handle different types of error responses
@@ -93,16 +90,16 @@ const App = () => {
         setError(err.message || "Failed to fetch weather data")
       }
       setWeatherData(null)
-      setHourlyData([])
-      setDailyData([])
+      setHourlyForecast(null)
+      setDailyForecast(null)
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => {
-    fetchWeatherData()
-  }, [])
+  const handleLocationSelect = (city) => {
+    fetchWeatherData(city)
+  }
 
   return (
     <div className="min-h-screen w-full relative">
@@ -113,7 +110,7 @@ const App = () => {
       <div className="relative w-full min-h-screen px-4 py-6 md:py-8 mx-auto max-w-7xl z-10">
         <div className="flex flex-col h-full gap-4">
           <div className="flex justify-between items-center">
-            <SearchBar onSearch={fetchWeatherData} />
+            <SearchBar onLocationSelect={handleLocationSelect} />
             <UnitToggle isCelsius={isCelsius} onToggle={setIsCelsius} />
           </div>
 
@@ -129,11 +126,10 @@ const App = () => {
                 <CurrentWeatherSkeleton />
                 <WeatherDetailsSkeleton />
               </div>
-              <HourlyForecastSkeleton />
               <ChartSkeleton />
               <DailyForecastSkeleton />
             </div>
-          ) : (
+          ) : weatherData ? (
             <div className="flex-1 flex flex-col gap-4">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <CurrentWeather 
@@ -145,18 +141,19 @@ const App = () => {
                   unit={isCelsius ? "°C" : "°F"} 
                 />
               </div>
-              <HourlyForecast 
-                hourlyData={convertTemperature(hourlyData)} 
-                unit={isCelsius ? "°C" : "°F"} 
-              />
               <HourlyTemperatureChart 
-                hourlyData={convertTemperature(hourlyData)} 
-                unit={isCelsius ? "°C" : "°F"} 
+                hourlyData={convertTemperature(hourlyForecast)} 
+                unit={isCelsius ? "°C" : "°F"}
+                locationTime={weatherData?.time} 
               />
               <DailyForecast 
-                dailyData={convertTemperature(dailyData)} 
+                dailyData={convertTemperature(dailyForecast)} 
                 unit={isCelsius ? "°C" : "°F"} 
               />
+            </div>
+          ) : (
+            <div className="text-center text-gray-400 mt-8">
+              Search for a city or allow location detection to see weather information
             </div>
           )}
         </div>

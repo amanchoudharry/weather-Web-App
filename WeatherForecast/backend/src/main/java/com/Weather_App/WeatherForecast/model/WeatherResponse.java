@@ -25,6 +25,21 @@ public class WeatherResponse {
     private String date;
     private String sunrise;
     private String sunset;
+    private String moonrise;
+    private String moonset;
+    private String moonPhase;
+    private Double moonIllumination;
+    private Double uvIndex;
+    
+    // Air Quality fields
+    private Double co;
+    private Double no2;
+    private Double o3;
+    private Double so2;
+    private Double pm2_5;
+    private Double pm10;
+    private Integer usEpaIndex;
+    private Integer gbDefraIndex;
 
     // Getters and Setters
     public String getCity() {
@@ -193,5 +208,110 @@ public class WeatherResponse {
 
     public void setSunset(String sunset) {
         this.sunset = sunset;
+    }
+
+    public String getMoonrise() {
+        return moonrise;
+    }
+
+    public void setMoonrise(String moonrise) {
+        this.moonrise = moonrise;
+    }
+
+    public String getMoonset() {
+        return moonset;
+    }
+
+    public void setMoonset(String moonset) {
+        this.moonset = moonset;
+    }
+
+    public String getMoonPhase() {
+        return moonPhase;
+    }
+
+    public void setMoonPhase(String moonPhase) {
+        this.moonPhase = moonPhase;
+    }
+
+    public Double getMoonIllumination() {
+        return moonIllumination;
+    }
+
+    public void setMoonIllumination(Double moonIllumination) {
+        this.moonIllumination = moonIllumination;
+    }
+
+    public Double getUvIndex() {
+        return uvIndex;
+    }
+
+    public void setUvIndex(Double uvIndex) {
+        this.uvIndex = uvIndex;
+    }
+
+    // Air Quality Getters and Setters
+    public Double getCo() {
+        return co;
+    }
+
+    public void setCo(Double co) {
+        this.co = co;
+    }
+
+    public Double getNo2() {
+        return no2;
+    }
+
+    public void setNo2(Double no2) {
+        this.no2 = no2;
+    }
+
+    public Double getO3() {
+        return o3;
+    }
+
+    public void setO3(Double o3) {
+        this.o3 = o3;
+    }
+
+    public Double getSo2() {
+        return so2;
+    }
+
+    public void setSo2(Double so2) {
+        this.so2 = so2;
+    }
+
+    public Double getPm2_5() {
+        return pm2_5;
+    }
+
+    public void setPm2_5(Double pm2_5) {
+        this.pm2_5 = pm2_5;
+    }
+
+    public Double getPm10() {
+        return pm10;
+    }
+
+    public void setPm10(Double pm10) {
+        this.pm10 = pm10;
+    }
+
+    public Integer getUsEpaIndex() {
+        return usEpaIndex;
+    }
+
+    public void setUsEpaIndex(Integer usEpaIndex) {
+        this.usEpaIndex = usEpaIndex;
+    }
+
+    public Integer getGbDefraIndex() {
+        return gbDefraIndex;
+    }
+
+    public void setGbDefraIndex(Integer gbDefraIndex) {
+        this.gbDefraIndex = gbDefraIndex;
     }
 } 

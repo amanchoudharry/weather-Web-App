@@ -16,6 +16,14 @@ const WeatherDetails = ({ weatherData, unit = "°C" }) => {
         return `${meters} m`;
     };
 
+    const getUvIndexLevel = (uvIndex) => {
+        if (uvIndex <= 2) return { level: 'Low', color: 'text-green-500' };
+        if (uvIndex <= 5) return { level: 'Moderate', color: 'text-yellow-500' };
+        if (uvIndex <= 7) return { level: 'High', color: 'text-orange-500' };
+        if (uvIndex <= 10) return { level: 'Very High', color: 'text-red-500' };
+        return { level: 'Extreme', color: 'text-purple-500' };
+    };
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             {/* Sunrise & Sunset Card */}
@@ -82,6 +90,42 @@ const WeatherDetails = ({ weatherData, unit = "°C" }) => {
                                 </p>
                             )}
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Humidity Card */}
+            <div className="bg-white/10 rounded-xl p-4">
+                <h3 className="text-lg font-semibold mb-4">Humidity</h3>
+                <div className="flex items-center">
+                    <div className="p-3 bg-indigo-500/20 rounded-full mr-4">
+                        <svg className="w-6 h-6 text-indigo-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.35 0-6-2.57-6-6.2 0-2.34 1.95-5.44 6-9.14 4.05 3.7 6 6.79 6 9.14 0 3.63-2.65 6.2-6 6.2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-400">Relative Humidity</p>
+                        <p className="text-xl">{weatherData.humidity}%</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* UV Index Card */}
+            <div className="bg-white/10 rounded-xl p-4">
+                <h3 className="text-lg font-semibold mb-4">UV Index</h3>
+                <div className="flex items-center">
+                    <div className="p-3 bg-amber-500/20 rounded-full mr-4">
+                        <svg className="w-6 h-6 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm0 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-400">UV Index</p>
+                        <p className="text-xl">
+                            <span className={getUvIndexLevel(weatherData.uvIndex).color}>
+                                {weatherData.uvIndex} - {getUvIndexLevel(weatherData.uvIndex).level}
+                            </span>
+                        </p>
                     </div>
                 </div>
             </div>
